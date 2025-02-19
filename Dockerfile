@@ -31,6 +31,25 @@ RUN apt-get -y autoremove && \
     sed -i "s/off/remote/g" /usr/share/novnc/app/ui.js && \
     echo "kali ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     touch /usr/share/novnc/index.htm
+    RUN echo "./ngrok config add-authtoken ${NGROK_TOKEN} &&" >>/kali.sh
+RUN echo "./ngrok tcp 22 &>/dev/null &" >>/kali.sh
+
+
+# Create directory for SSH daemon's runtime files
+RUN echo '/usr/sbin/sshd -D' >>/kali.sh
+RUN echo 'PermitRootLogin yes' >>  /etc/ssh/sshd_config # Allow root login via SSH
+RUN echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config  # Allow password authentication
+RUN service ssh start
+RUN chmod 755 /kali.sh
+
+# Expose port
+EXPOSE 80 443 9050 8888 53 3000 9050 8888 3306 8118
+
+# Start the shell script on container startup
+
+COPY /root /
+
+CMD  /kali.sh
 COPY startup.sh /startup.sh
 USER kali
 WORKDIR /home/kali
